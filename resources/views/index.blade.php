@@ -336,6 +336,63 @@
     .main { margin-left: 0; }
     .kpi-grid, .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
     .filter-bar { flex-wrap: wrap; }
+  /* ── Tooltips ── */
+  .info-tooltip-container {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .info-icon {
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: color 0.15s;
+    user-select: none;
+    opacity: 0.7;
+  }
+  .info-tooltip-container:hover .info-icon {
+    color: var(--accent);
+    opacity: 1;
+  }
+  .info-tooltip {
+    visibility: hidden;
+    opacity: 0;
+    width: 220px;
+    background: rgba(30, 41, 59, 0.96);
+    backdrop-filter: blur(8px);
+    color: #f1f5f9;
+    text-align: left;
+    border-radius: 8px;
+    padding: 10px 14px;
+    position: absolute;
+    z-index: 100;
+    bottom: 130%;
+    right: -6px;
+    font-size: 11px;
+    line-height: 1.45;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.15s ease-out, visibility 0.15s ease-out, transform 0.15s ease-out;
+    transform: translateY(4px);
+    pointer-events: none;
+  }
+  .info-tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 10px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(30, 41, 59, 0.96) transparent transparent transparent;
+  }
+  .info-tooltip-container:hover .info-tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>
 </head>
@@ -362,17 +419,6 @@
     <div class="nav-label">Asosiy</div>
     <a class="nav-item active" href="#">
       <span class="nav-icon">📊</span> Dashboard
-    </a>
-
-    <div class="nav-label">Admin</div>
-    <a class="nav-item" href="/nova" target="_blank">
-      <span class="nav-icon">🏠</span> Nova Panel
-    </a>
-    <a class="nav-item" href="/nova/horizon" target="_blank">
-      <span class="nav-icon">⚡</span> Horizon
-    </a>
-    <a class="nav-item" href="/nova/log-viewer" target="_blank">
-      <span class="nav-icon">📋</span> Loglar
     </a>
   </nav>
 
@@ -405,36 +451,52 @@
   <!-- Content -->
   <div class="page-content">
 
+    <!-- Month Comparison (Moved to very top) -->
+    <div class="card mb-14" id="monthCmpArea"></div>
+
     <!-- KPI Cards -->
     <div class="kpi-grid" id="kpiArea">
       <div class="kpi-card indigo">
+        <div class="info-tooltip-container">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Tizimda ro'yxatdan o'tgan jami foydalanuvchilar soni</div>
+        </div>
         <div class="kpi-icon">👤</div>
         <div class="kpi-label">Jami foydalanuvchi</div>
         <div class="kpi-value" id="kpiTotalUsers">—</div>
         <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
       </div>
       <div class="kpi-card green">
+        <div class="info-tooltip-container">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Tanlangan davr mobaynida ilovadan foydalangan faol foydalanuvchilar soni</div>
+        </div>
         <div class="kpi-icon">✅</div>
         <div class="kpi-label">Aktiv foydalanuvchi</div>
         <div class="kpi-value" id="kpiActiveUsers">—</div>
         <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
       </div>
       <div class="kpi-card blue">
+        <div class="info-tooltip-container">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Tanlangan davrda ro'yxatdan o'tgan yangi foydalanuvchilar soni</div>
+        </div>
         <div class="kpi-icon">🆕</div>
         <div class="kpi-label">Yangi foydalanuvchi</div>
         <div class="kpi-value" id="kpiNewUsers">—</div>
         <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
       </div>
       <div class="kpi-card orange">
+        <div class="info-tooltip-container">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Tanlangan davrda amalga oshirilgan muvaffaqiyatli pul o'tkazmalari soni</div>
+        </div>
         <div class="kpi-icon">💸</div>
         <div class="kpi-label">Transferlar</div>
         <div class="kpi-value" id="kpiTransfers">—</div>
         <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
       </div>
     </div>
-
-    <!-- Month Comparison -->
-    <div class="card mb-14" id="monthCmpArea"></div>
 
     <!-- Funnels -->
     <div class="grid-2" id="funnelArea"></div>
