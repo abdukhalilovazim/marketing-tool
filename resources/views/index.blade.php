@@ -437,16 +437,6 @@
       <div class="page-title">Marketing Dashboard</div>
       <span class="page-badge">LIVE</span>
     </div>
-    <div class="topbar-right">
-      <div class="filter-bar">
-        <span class="filter-lbl">Dan</span>
-        <input class="date-inp" type="date" id="mktFrom">
-        <span class="filter-arrow">→</span>
-        <span class="filter-lbl">Gacha</span>
-        <input class="date-inp" type="date" id="mktTo">
-        <button class="btn-apply" onclick="refreshData()">Qo'llash</button>
-      </div>
-    </div>
   </header>
 
   <!-- Content -->
@@ -454,6 +444,22 @@
 
     <!-- Month Comparison (Moved to very top) -->
     <div class="card mb-14" id="monthCmpArea"></div>
+
+    <!-- Date Filter Bar (Moved under Month Comparison) -->
+    <div class="card mb-14" style="position: relative; padding: 14px 20px;">
+      <div class="info-tooltip-container" style="top: 14px; right: 14px;">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-tooltip">Statistikalarni filtrlash uchun sana oralig'ini tanlang va Qo'llash tugmasini bosing</div>
+      </div>
+      <div class="filter-bar" style="background: transparent; border: none; padding: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span class="filter-lbl" style="font-size: 12px;">Dan</span>
+        <input class="date-inp" type="date" id="mktFrom" style="font-size: 13px; background: var(--surface2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <span class="filter-arrow">→</span>
+        <span class="filter-lbl" style="font-size: 12px;">Gacha</span>
+        <input class="date-inp" type="date" id="mktTo" style="font-size: 13px; background: var(--surface2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <button class="btn-apply" onclick="refreshData()" style="margin-left: auto; height: 34px;">Qo'llash</button>
+      </div>
+    </div>
 
     <!-- KPI Cards -->
     <div class="kpi-grid" id="kpiArea">
