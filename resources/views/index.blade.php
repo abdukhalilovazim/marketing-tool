@@ -394,6 +394,49 @@
     opacity: 1;
     transform: translateY(0);
   }
+
+  /* ── Retention Cohort styles ── */
+  .ret-table tbody tr {
+    border-bottom: 1px solid var(--border) !important;
+    transition: background 0.1s;
+  }
+  .ret-table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.02) !important;
+  }
+  .ret-table td {
+    padding: 8px 6px !important;
+    text-align: center;
+    background: transparent !important;
+  }
+  .ret-table td:first-child {
+    padding: 8px 12px !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+    font-size: 13px !important;
+    white-space: nowrap;
+    text-align: left !important;
+  }
+  .ret-table td:nth-child(2) {
+    padding: 8px 12px !important;
+    text-align: right !important;
+    color: var(--text-muted) !important;
+    font-size: 12px !important;
+  }
+  .c-cell {
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    display: inline-block;
+    min-width: 42px;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-align: center;
+  }
+  .cell-month {
+    font-size: 9px !important;
+    color: var(--text-muted) !important;
+    margin-top: 2px !important;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -417,8 +460,11 @@
 
   <nav class="sidebar-nav">
     <div class="nav-label">Asosiy</div>
-    <a class="nav-item active" href="#">
+    <a class="nav-item active" id="menuDashboard" href="#" onclick="switchTab('dashboard')">
       <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" id="menuRetention" href="#" onclick="switchTab('retention')">
+      <span class="nav-icon">📈</span> Retention
     </a>
   </nav>
 
@@ -440,9 +486,9 @@
 
   <!-- Content -->
   <div class="page-content">
-
-    <!-- Month Comparison (Moved to very top) -->
-    <div class="card mb-14" id="monthCmpArea"></div>
+    <div id="tabContentDashboard">
+      <!-- Month Comparison (Moved to very top) -->
+      <div class="card mb-14" id="monthCmpArea"></div>
 
     <!-- Date Filter Bar (Moved under Month Comparison) -->
     <div class="card mb-14" style="padding: 14px 20px;">
@@ -540,23 +586,109 @@
       <canvas id="mktActiveChart" height="75"></canvas>
     </div>
 
-    <!-- Source donut -->
-    <div class="card mb-14" id="sourceChartWrap" style="position: relative;">
-      <div class="info-tooltip-container">
-        <span class="info-icon">ℹ️</span>
-        <div class="info-tooltip">Foydalanuvchilar qaysi kanallar (Instagram, Telegram, YouTube va b.) orqali ilovani topganligi taqsimoti</div>
-      </div>
-      <div class="chart-hdr">
-        <div>
-          <div class="chart-title">Foydalanuvchi manbalari</div>
-          <div class="chart-sub">Ilova topish kanallari bo'yicha taqsimot</div>
+      <!-- Source donut -->
+      <div class="card mb-14" id="sourceChartWrap" style="position: relative;">
+        <div class="info-tooltip-container">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Foydalanuvchilar qaysi kanallar (Instagram, Telegram, YouTube va b.) orqali ilovani topganligi taqsimoti</div>
+        </div>
+        <div class="chart-hdr">
+          <div>
+            <div class="chart-title">Foydalanuvchi manbalari</div>
+            <div class="chart-sub">Ilova topish kanallari bo'yicha taqsimot</div>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <canvas class="donut-canvas" id="sourceChart"></canvas>
+          <div class="source-legend" id="sourceLegend"></div>
         </div>
       </div>
-      <div class="donut-wrap">
-        <canvas class="donut-canvas" id="sourceChart"></canvas>
-        <div class="source-legend" id="sourceLegend"></div>
+    </div><!-- /tabContentDashboard -->
+
+    <div id="tabContentRetention" style="display: none;">
+      <!-- Retention card -->
+      <div class="card" style="position: relative; padding: 24px 28px 20px;">
+        <div class="info-tooltip-container" style="top: 24px; right: 28px;">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">Oylar bo'yicha foydalanuvchilarning qaytish (retention) darajasini ko'rsatuvchi cohort tahlil jadvali</div>
+        </div>
+        <div class="ret-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div class="chart-title" style="font-size: 15px; font-weight: 700;">Oylik Cohort Retention Jadvali</div>
+            <div class="chart-sub" id="retSubLabel" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              Birinchi marta tranzaksiya qilgan foydalanuvchilar
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div class="type-btns" style="display: flex; gap: 6px;">
+              <button id="btnNew" class="btn-apply" onclick="setRetType('new')" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); box-shadow: none;">
+                Yangi foydalanuvchilar
+              </button>
+              <button id="btnActive" class="btn-apply" onclick="setRetType('active')" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); box-shadow: none;">
+                Faol foydalanuvchilar
+              </button>
+            </div>
+            <div class="filter-area" id="retFilterArea" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;"></div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrap" style="overflow-x: auto;">
+          <table class="ret-table" style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 980px;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border);">
+                <th style="text-align: left; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">COHORT</th>
+                <th style="text-align: right; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">FOYDALANUVCHILAR</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">7-KUN</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">15-KUN</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">1-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">2-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">3-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">4-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">5-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">6-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">7-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">8-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">9-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">10-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">11-OY</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">12-OY</th>
+              </tr>
+            </thead>
+            <tbody id="retTableBody" style="color: var(--text-dim);"></tbody>
+          </table>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend-bar" style="display: flex; align-items: center; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap;">
+          <span class="legend-label" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Retention darajasi:</span>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #86efac;"></div>
+            <span style="color: #14532d;">≥ 60%</span>
+          </div>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #bbf7d0;"></div>
+            <span style="color: #166534;">≥ 48%</span>
+          </div>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #fef08a;"></div>
+            <span style="color: #713f12;">≥ 37%</span>
+          </div>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #fed7aa;"></div>
+            <span style="color: #9a3412;">≥ 26%</span>
+          </div>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #fca5a5;"></div>
+            <span style="color: #991b1b;">≥ 15%</span>
+          </div>
+          <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
+            <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #f87171;"></div>
+            <span style="color: #7f1d1d;">&lt; 15%</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </div><!-- /tabContentRetention -->
 
   </div><!-- /page-content -->
 </div><!-- /main -->
@@ -901,13 +1033,228 @@ function renderSourceDonut() {
     </div>`).join('');
 }
 
-// ── Init ──
-const today    = new Date();
-const lastMonth = new Date(); lastMonth.setDate(today.getDate() - 29);
-document.getElementById('mktFrom').value = lastMonth.toISOString().split('T')[0];
-document.getElementById('mktTo').value   = today.toISOString().split('T')[0];
-
 refreshData();
+
+// ── Retention Tab Logic & Data ──
+const MONTHS = ["Yan","Fev","Mar","Apr","May","Iyn","Iyl","Avg","Sen","Okt","Noy","Dek"];
+
+const newRetData = [
+  { l: "Yan 2025", u: 3890, yr: 2025, v: [44,33,26,20,18,17,13,15,11,11,10,8,5,6] },
+  { l: "Fev 2025", u: 3560, yr: 2025, v: [40,29,23,22,19,15,17,13,12,11,7,8,7,5] },
+  { l: "Mar 2025", u: 4120, yr: 2025, v: [42,33,28,19,21,15,13,11,12,9,9,9,6,7] },
+  { l: "Apr 2025", u: 3780, yr: 2025, v: [40,31,25,24,16,14,12,11,13,9,7,9,5,6] },
+  { l: "May 2025", u: 4350, yr: 2025, v: [44,28,26,22,21,18,14,14,9,8,7,6,7] },
+  { l: "Iyn 2025", u: 4680, yr: 2025, v: [41,32,29,25,20,16,17,13,9,8,8,8] },
+  { l: "Iyl 2025", u: 5120, yr: 2025, v: [43,31,28,24,19,16,13,12,12,9,10] },
+  { l: "Avg 2025", u: 4890, yr: 2025, v: [42,27,25,22,19,14,14,11,13,11] },
+  { l: "Sen 2025", u: 5340, yr: 2025, v: [39,27,30,19,20,18,13,10,9] },
+  { l: "Okt 2025", u: 5780, yr: 2025, v: [39,30,25,23,19,18,13,15] },
+  { l: "Noy 2025", u: 6120, yr: 2025, v: [45,33,28,23,22,19,16] },
+  { l: "Dek 2025", u: 5890, yr: 2025, v: [46,30,24,22,19,15] },
+  { l: "Yan 2026", u: 6450, yr: 2026, v: [47,32,26,20,20] },
+  { l: "Fev 2026", u: 5980, yr: 2026, v: [43,31,26,23] },
+  { l: "Mar 2026", u: 6780, yr: 2026, v: [44,29,27] },
+  { l: "Apr 2026", u: 3210, yr: 2026, v: [45,33] }
+];
+
+const activeRetData = [
+  { l: "Yan 2025", u: 12450, yr: 2025, v: [83,74,63,52,47,47,38,39,33,32,29,23,15,17] },
+  { l: "Fev 2025", u: 11230, yr: 2025, v: [79,71,59,58,48,41,44,37,35,30,21,24,20,15] },
+  { l: "Mar 2025", u: 13560, yr: 2025, v: [81,76,63,54,57,44,39,35,37,28,27,27,20,22] },
+  { l: "Apr 2025", u: 12100, yr: 2025, v: [79,75,61,62,47,42,37,36,39,28,23,28,17,20] },
+  { l: "May 2025", u: 14200, yr: 2025, v: [83,69,62,59,56,51,40,41,29,26,23,19,22] },
+  { l: "Iyn 2025", u: 15340, yr: 2025, v: [80,75,68,63,55,47,48,39,30,27,27,26] },
+  { l: "Iyl 2025", u: 16890, yr: 2025, v: [82,73,66,62,54,48,39,38,38,29,30] },
+  { l: "Avg 2025", u: 15620, yr: 2025, v: [81,66,63,60,52,43,41,34,38,33] },
+  { l: "Sen 2025", u: 17240, yr: 2025, v: [78,67,70,55,55,51,41,33,29] },
+  { l: "Okt 2025", u: 18560, yr: 2025, v: [78,71,63,62,54,52,40,45] },
+  { l: "Noy 2025", u: 19450, yr: 2025, v: [85,77,67,62,58,54,45] },
+  { l: "Dek 2025", u: 18120, yr: 2025, v: [87,72,62,61,54,44] },
+  { l: "Yan 2026", u: 20340, yr: 2026, v: [88, 74, 63, 56, 56] },
+  { l: "Fev 2026", u: 18760, yr: 2026, v: [84, 72, 63, 59] },
+  { l: "Mar 2026", u: 21240, yr: 2026, v: [85, 70, 63] },
+  { l: "Apr 2026", u: 10120, yr: 2026, v: [86, 74] }
+];
+
+let retType = "new";
+let retSel = "all";
+let retRange = false;
+let retFrom = "";
+let retTo = "";
+
+const allLabels = newRetData.map(c => c.l);
+
+function switchTab(tab) {
+  const tabDashboard = document.getElementById('tabContentDashboard');
+  const tabRetention = document.getElementById('tabContentRetention');
+  const menuDashboard = document.getElementById('menuDashboard');
+  const menuRetention = document.getElementById('menuRetention');
+  const pageTitle = document.querySelector('.topbar .page-title');
+  const pageBadge = document.querySelector('.topbar .page-badge');
+  
+  if (tab === 'dashboard') {
+    tabDashboard.style.display = 'block';
+    tabRetention.style.display = 'none';
+    menuDashboard.classList.add('active');
+    menuRetention.classList.remove('active');
+    if (pageTitle) pageTitle.textContent = 'Marketing Dashboard';
+    if (pageBadge) {
+      pageBadge.textContent = 'LIVE';
+      pageBadge.style.background = 'rgba(99,102,241,0.15)';
+      pageBadge.style.color = 'var(--accent)';
+    }
+  } else {
+    tabDashboard.style.display = 'none';
+    tabRetention.style.display = 'block';
+    menuDashboard.classList.remove('active');
+    menuRetention.classList.add('active');
+    if (pageTitle) pageTitle.textContent = 'Retention Analytics';
+    if (pageBadge) {
+      pageBadge.textContent = 'Cohort Analysis';
+      pageBadge.style.background = 'rgba(59,130,246,0.15)';
+      pageBadge.style.color = 'var(--blue)';
+    }
+    renderRet();
+  }
+}
+
+function cColor(p) {
+  if (p >= 60) return "background:#86efac;color:#14532d";
+  if (p >= 48) return "background:#bbf7d0;color:#166534";
+  if (p >= 37) return "background:#fef08a;color:#713f12";
+  if (p >= 26) return "background:#fed7aa;color:#9a3412";
+  if (p >= 15) return "background:#fca5a5;color:#991b1b";
+  return "background:#f87171;color:#7f1d1d";
+}
+
+function mLabel(cohortL, off) {
+  const [ms, ys] = cohortL.split(" ");
+  const sm = MONTHS.indexOf(ms), sy = parseInt(ys);
+  const tot = sm + off, m = ((tot % 12) + 12) % 12, y = sy + Math.floor(tot / 12);
+  return MONTHS[m] + (y !== sy ? ` '${String(y).slice(2)}` : "");
+}
+
+function inputToLabel(v) {
+  if (!v) return "";
+  const [y, m] = v.slice(0, 7).split("-");
+  return MONTHS[+m - 1] + " " + y;
+}
+
+function getFilteredCohorts() {
+  const data = retType === "active" ? activeRetData : newRetData;
+  if (retRange && retFrom && retTo) {
+    const fi = allLabels.indexOf(inputToLabel(retFrom));
+    const ti = allLabels.indexOf(inputToLabel(retTo));
+    const [lo, hi] = fi <= ti ? [fi, ti] : [ti, fi];
+    return data.filter((_, i) => i >= lo && i <= hi);
+  } else if (retSel.startsWith("y:")) {
+    return data.filter(c => c.yr === +retSel.slice(2));
+  } else if (retSel.startsWith("m:")) {
+    return data.filter(c => c.l === retSel.slice(2));
+  }
+  return data;
+}
+
+function renderRet() {
+  const cohorts = getFilteredCohorts();
+
+  // Sub label
+  document.getElementById("retSubLabel").textContent =
+    retType === "new"
+      ? "Birinchi marta tranzaksiya qilgan foydalanuvchilar"
+      : "O'sha oyda kamida 1 tranzaksiya qilgan foydalanuvchilar";
+
+  // Type buttons styling
+  const btnNew = document.getElementById("btnNew");
+  const btnActive = document.getElementById("btnActive");
+  if (retType === "new") {
+    btnNew.style.background = "rgba(99, 102, 241, 0.15)";
+    btnNew.style.color = "var(--accent)";
+    btnNew.style.borderColor = "rgba(99, 102, 241, 0.3)";
+    btnActive.style.background = "var(--surface2)";
+    btnActive.style.color = "var(--text-dim)";
+    btnActive.style.borderColor = "var(--border)";
+  } else {
+    btnNew.style.background = "var(--surface2)";
+    btnNew.style.color = "var(--text-dim)";
+    btnNew.style.borderColor = "var(--border)";
+    btnActive.style.background = "rgba(59, 130, 246, 0.15)";
+    btnActive.style.color = "var(--blue)";
+    btnActive.style.borderColor = "rgba(59, 130, 246, 0.3)";
+  }
+
+  // Render filter area
+  const filterArea = document.getElementById("retFilterArea");
+  const selStyle = "font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;color:var(--text);background:var(--surface2);cursor:pointer;color-scheme:dark;";
+  const inStyle = "font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;color:var(--text);background:var(--surface2);color-scheme:dark;";
+  const bRangeStyle = `padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;border:1px solid;${retRange ? "background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3);" : "background:var(--surface2);color:var(--text-dim);border-color:var(--border);"}`;
+
+  const mainOpts = `
+    <option value="all"${retSel === "all" ? " selected" : ""}>Barcha</option>
+    <optgroup label="Yil bo'yicha">
+      <option value="y:2025"${retSel === "y:2025" ? " selected" : ""}>2025</option>
+      <option value="y:2026"${retSel === "y:2026" ? " selected" : ""}>2026</option>
+    </optgroup>
+    <optgroup label="Oy bo'yicha">
+      ${allLabels.map(m => `<option value="m:${m}"${retSel === `m:${m}` ? " selected" : ""}>${m}</option>`).join("")}
+    </optgroup>`;
+
+  if (retRange) {
+    filterArea.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <input type="date" value="${retFrom}" min="2025-01-01" max="2026-04-30"
+               style="${inStyle}" onchange="retFrom=this.value;renderRet()">
+        <span style="color:var(--text-muted);font-size:13px">—</span>
+        <input type="date" value="${retTo}" min="2025-01-01" max="2026-04-30"
+               style="${inStyle}" onchange="retTo=this.value;renderRet()">
+        <button style="${bRangeStyle}" onclick="retRange=false;retFrom='';retTo='';renderRet()">× Bekor</button>
+      </div>`;
+  } else {
+    filterArea.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px">
+        <select style="${selStyle}" onchange="retSel=this.value;renderRet()">${mainOpts}</select>
+        <button style="${bRangeStyle}" onclick="retRange=true;retSel='all';renderRet()">Oraliq</button>
+      </div>`;
+  }
+
+  // Render Table
+  const tbody = document.getElementById("retTableBody");
+  let html = "";
+  cohorts.forEach(c => {
+    const d7v = c.v[0];
+    const d15v = c.v[1];
+    const mnths = c.v.slice(2);
+
+    html += `<tr>
+      <td>${c.l}</td>
+      <td style="padding:8px 10px;text-align:right;color:var(--text-muted);font-size:12px">${c.u.toLocaleString()}</td>`;
+
+    html += buildCell(d7v, mLabel(c.l, 0));
+    html += buildCell(d15v, mLabel(c.l, 0));
+
+    for (let m = 0; m < 12; m++) {
+      html += m < mnths.length ? buildCell(mnths[m], mLabel(c.l, m + 1)) : buildNa();
+    }
+    html += "</tr>";
+  });
+  tbody.innerHTML = html;
+}
+
+function buildCell(v, ml) {
+  return `<td style="padding:4px 5px;text-align:center">
+    <span class="c-cell" style="${cColor(v)}">${v}%</span>
+    <div class="cell-month">${ml}</div>
+  </td>`;
+}
+
+function buildNa() {
+  return `<td style="text-align:center;color:var(--text-muted);font-size:13px;padding:5px 6px">—</td>`;
+}
+
+function setRetType(t) {
+  retType = t;
+  renderRet();
+}
 </script>
 </body>
 </html>
