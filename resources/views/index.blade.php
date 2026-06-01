@@ -758,11 +758,27 @@ async function refreshData() {
     const res = await fetch(url);
     currentData = await res.json();
 
+    if (currentData.retention) {
+      if (currentData.retention.new && currentData.retention.new.length > 0) {
+        newRetData = currentData.retention.new;
+      }
+      if (currentData.retention.active && currentData.retention.active.length > 0) {
+        activeRetData = currentData.retention.active;
+      }
+      allLabels = newRetData.map(c => c.l);
+    }
+
     updateKPIs();
     renderMonthCmp();
     renderFunnels();
     updateCharts();
     renderSourceDonut();
+
+    // Re-render retention table if active
+    const menuRetention = document.getElementById('menuRetention');
+    if (menuRetention && menuRetention.classList.contains('active')) {
+      renderRet();
+    }
   } catch (e) {
     console.error('Data load error', e);
   } finally {
@@ -1038,7 +1054,7 @@ refreshData();
 // ── Retention Tab Logic & Data ──
 const MONTHS = ["Yan","Fev","Mar","Apr","May","Iyn","Iyl","Avg","Sen","Okt","Noy","Dek"];
 
-const newRetData = [
+let newRetData = [
   { l: "Yan 2025", u: 3890, yr: 2025, v: [44,33,26,20,18,17,13,15,11,11,10,8,5,6] },
   { l: "Fev 2025", u: 3560, yr: 2025, v: [40,29,23,22,19,15,17,13,12,11,7,8,7,5] },
   { l: "Mar 2025", u: 4120, yr: 2025, v: [42,33,28,19,21,15,13,11,12,9,9,9,6,7] },
@@ -1057,7 +1073,7 @@ const newRetData = [
   { l: "Apr 2026", u: 3210, yr: 2026, v: [45,33] }
 ];
 
-const activeRetData = [
+let activeRetData = [
   { l: "Yan 2025", u: 12450, yr: 2025, v: [83,74,63,52,47,47,38,39,33,32,29,23,15,17] },
   { l: "Fev 2025", u: 11230, yr: 2025, v: [79,71,59,58,48,41,44,37,35,30,21,24,20,15] },
   { l: "Mar 2025", u: 13560, yr: 2025, v: [81,76,63,54,57,44,39,35,37,28,27,27,20,22] },
@@ -1082,7 +1098,7 @@ let retRange = false;
 let retFrom = "";
 let retTo = "";
 
-const allLabels = newRetData.map(c => c.l);
+let allLabels = newRetData.map(c => c.l);
 
 function switchTab(tab) {
   const tabDashboard = document.getElementById('tabContentDashboard');

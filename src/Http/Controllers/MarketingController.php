@@ -40,6 +40,7 @@ class MarketingController extends Controller
             'funnels' => $this->getFunnels($from, $to),
             'daily_stats' => $this->getDailyStats($from, $to),
             'sources' => $this->getSources($from, $to),
+            'retention' => $this->getRetentionData(),
         ]);
     }
 
@@ -307,5 +308,232 @@ class MarketingController extends Controller
         usort($data, fn ($a, $b) => $b['value'] <=> $a['value']);
 
         return $data;
+    }
+
+    /**
+     * Calculate monthly cohort retention dynamically.
+     *
+     * @return array
+     */
+    private function getRetentionData(): array
+    {
+        $userClass = config('marketing-tool.models.user', \App\Models\User::class);
+        $userActivityClass = config('marketing-tool.models.user_activity');
+        $transferClass = config('marketing-tool.models.transfer', \App\Models\Transfer::class);
+        $dateColumn = config('marketing-tool.fields.user_activity.date_column', 'day');
+
+        $MONTH_NAMES = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn", "Iyl", "Avg", "Sen", "Okt", "Noy", "Dek"];
+
+        // 1. Yangi Foydalanuvchilar Cohort Retention
+        $newCohorts = [];
+        $now = now();
+
+        // Get all users in the last 18 months
+        $users = $userClass::where('created_at', '>=', now()->subMonths(18))
+            ->select('id', 'created_at')
+            ->get();
+
+        // Group by month
+        $groupedUsers = [];
+        foreach ($users as $user) {
+            $monthKey = $user->created_at->format('Y-m'); // e.g. "2025-01"
+            $groupedUsers[$monthKey][] = $user;
+        }
+        ksort($groupedUsers);
+
+        foreach ($groupedUsers as $monthKey => $cohortUsers) {
+            $year = (int) substr($monthKey, 0, 4);
+            $month = (int) substr($monthKey, 5, 2);
+            $cohortLabel = $MONTH_NAMES[$month - 1] . ' ' . $year;
+
+            $totalCount = count($cohortUsers);
+            if ($totalCount === 0) continue;
+
+            $userIds = array_column($cohortUsers, 'id');
+
+            // Fetch all activity dates & successful transfer dates for these users
+            $activityDates = [];
+            if ($userActivityClass) {
+                $activities = $userActivityClass::whereIn('user_id', $userIds)
+                    ->get(['user_id', $dateColumn, 'created_at']);
+                foreach ($activities as $act) {
+                    $dateStr = $act->$dateColumn instanceof Carbon ? $act->$dateColumn->format('Y-m-d') : substr((string)$act->$dateColumn, 0, 10);
+                    $activityDates[$act->user_id][] = Carbon::parse($dateStr);
+                }
+            }
+
+            if ($transferClass) {
+                $transfers = $transferClass::whereIn('user_id', $userIds)
+                    ->where('credit_state', 1)
+                    ->where('debit_state', 1)
+                    ->get(['user_id', 'created_at']);
+                foreach ($transfers as $tr) {
+                    $activityDates[$tr->user_id][] = $tr->created_at;
+                }
+            }
+
+            // Calculate retention metrics for each user in the cohort
+            $retained7Day = 0;
+            $retained15Day = 0;
+            $monthlyRetentionCounts = array_fill(1, 12, 0); // 1 to 12 months
+
+            // To avoid double counting same user in same target period
+            foreach ($cohortUsers as $user) {
+                $regDate = $user->created_at;
+                $dates = $activityDates[$user->id] ?? [];
+                
+                $has7 = false;
+                $has15 = false;
+                $monthsRetained = array_fill(1, 12, false);
+
+                foreach ($dates as $date) {
+                    $diffDays = $regDate->diffInDays($date);
+                    if ($diffDays >= 0 && $diffDays <= 7) {
+                        $has7 = true;
+                    }
+                    if ($diffDays >= 0 && $diffDays <= 15) {
+                        $has15 = true;
+                    }
+
+                    // Month diff based on calendar months
+                    $diffMonths = ($date->year - $regDate->year) * 12 + ($date->month - $regDate->month);
+                    if ($diffMonths >= 1 && $diffMonths <= 12) {
+                        $monthsRetained[$diffMonths] = true;
+                    }
+                }
+
+                if ($has7) $retained7Day++;
+                if ($has15) $retained15Day++;
+                foreach ($monthsRetained as $m => $val) {
+                    if ($val) $monthlyRetentionCounts[$m]++;
+                }
+            }
+
+            // Calculate percentages
+            $v = [
+                $totalCount > 0 ? round(($retained7Day / $totalCount) * 100) : 0,
+                $totalCount > 0 ? round(($retained15Day / $totalCount) * 100) : 0,
+            ];
+
+            // Determine how many calendar months have passed since this cohort month
+            $monthsElapsed = ($now->year - $year) * 12 + ($now->month - $month);
+
+            for ($m = 1; $m <= 12; $m++) {
+                if ($m <= $monthsElapsed) {
+                    $v[] = $totalCount > 0 ? round(($monthlyRetentionCounts[$m] / $totalCount) * 100) : 0;
+                }
+            }
+
+            $newCohorts[] = [
+                'l' => $cohortLabel,
+                'u' => $totalCount,
+                'yr' => $year,
+                'v' => $v,
+            ];
+        }
+
+        // 2. Faol Foydalanuvchilar (First transfer month cohort)
+        $activeCohorts = [];
+        if ($transferClass) {
+            // Find first successful transfer for all users
+            $firstTransfers = $transferClass::where('credit_state', 1)
+                ->where('debit_state', 1)
+                ->selectRaw('user_id, MIN(created_at) as first_transfer_at')
+                ->groupBy('user_id')
+                ->having('first_transfer_at', '>=', now()->subMonths(18))
+                ->get();
+
+            // Group users by first transfer month
+            $activeGroupedUsers = [];
+            foreach ($firstTransfers as $ft) {
+                $monthKey = Carbon::parse($ft->first_transfer_at)->format('Y-m');
+                $activeGroupedUsers[$monthKey][] = [
+                    'user_id' => $ft->user_id,
+                    'first_transfer_at' => Carbon::parse($ft->first_transfer_at),
+                ];
+            }
+            ksort($activeGroupedUsers);
+
+            foreach ($activeGroupedUsers as $monthKey => $cohortUsers) {
+                $year = (int) substr($monthKey, 0, 4);
+                $month = (int) substr($monthKey, 5, 2);
+                $cohortLabel = $MONTH_NAMES[$month - 1] . ' ' . $year;
+
+                $totalCount = count($cohortUsers);
+                if ($totalCount === 0) continue;
+
+                $userIds = array_column($cohortUsers, 'user_id');
+
+                // Fetch all successful transfers for these users
+                $transfers = $transferClass::whereIn('user_id', $userIds)
+                    ->where('credit_state', 1)
+                    ->where('debit_state', 1)
+                    ->get(['user_id', 'created_at']);
+
+                $transferDates = [];
+                foreach ($transfers as $tr) {
+                    $transferDates[$tr->user_id][] = $tr->created_at;
+                }
+
+                $retained7Day = 0;
+                $retained15Day = 0;
+                $monthlyRetentionCounts = array_fill(1, 12, 0);
+
+                foreach ($cohortUsers as $cu) {
+                    $firstTrDate = $cu['first_transfer_at'];
+                    $dates = $transferDates[$cu['user_id']] ?? [];
+
+                    $has7 = false;
+                    $has15 = false;
+                    $monthsRetained = array_fill(1, 12, false);
+
+                    foreach ($dates as $date) {
+                        $diffDays = $firstTrDate->diffInDays($date);
+                        if ($diffDays > 0 && $diffDays <= 7) {
+                            $has7 = true;
+                        }
+                        if ($diffDays > 0 && $diffDays <= 15) {
+                            $has15 = true;
+                        }
+
+                        $diffMonths = ($date->year - $firstTrDate->year) * 12 + ($date->month - $firstTrDate->month);
+                        if ($diffMonths >= 1 && $diffMonths <= 12) {
+                            $monthsRetained[$diffMonths] = true;
+                        }
+                    }
+
+                    if ($has7) $retained7Day++;
+                    if ($has15) $retained15Day++;
+                    foreach ($monthsRetained as $m => $val) {
+                        if ($val) $monthlyRetentionCounts[$m]++;
+                    }
+                }
+
+                $v = [
+                    $totalCount > 0 ? round(($retained7Day / $totalCount) * 100) : 0,
+                    $totalCount > 0 ? round(($retained15Day / $totalCount) * 100) : 0,
+                ];
+
+                $monthsElapsed = ($now->year - $year) * 12 + ($now->month - $month);
+
+                for ($m = 1; $m <= 12; $m++) {
+                    if ($m <= $monthsElapsed) {
+                        $v[] = $totalCount > 0 ? round(($monthlyRetentionCounts[$m] / $totalCount) * 100) : 0;
+                    }
+                }
+
+                $activeCohorts[] = [
+                    'l' => $cohortLabel,
+                    'u' => $totalCount,
+                    'yr' => $year,
+                    'v' => $v,
+                ];
+            }
+        }
+
+        return [
+            'new' => $newCohorts,
+            'active' => $activeCohorts,
+        ];
     }
 }
