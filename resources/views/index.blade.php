@@ -194,7 +194,6 @@
     border-radius: 16px;
     padding: 20px;
     position: relative;
-    overflow: hidden;
     transition: all .2s;
   }
   .kpi-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
@@ -446,11 +445,7 @@
     <div class="card mb-14" id="monthCmpArea"></div>
 
     <!-- Date Filter Bar (Moved under Month Comparison) -->
-    <div class="card mb-14" style="position: relative; padding: 14px 20px;">
-      <div class="info-tooltip-container" style="top: 14px; right: 14px;">
-        <span class="info-icon">ℹ️</span>
-        <div class="info-tooltip">Statistikalarni filtrlash uchun sana oralig'ini tanlang va Qo'llash tugmasini bosing</div>
-      </div>
+    <div class="card mb-14" style="padding: 14px 20px;">
       <div class="filter-bar" style="background: transparent; border: none; padding: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
         <span class="filter-lbl" style="font-size: 12px;">Dan</span>
         <input class="date-inp" type="date" id="mktFrom" style="font-size: 13px; background: var(--surface2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
