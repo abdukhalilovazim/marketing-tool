@@ -1,0 +1,21 @@
+{
+    "name": "revo/marketing-tool",
+    "description": "A pluggable Laravel package for marketing statistics.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2 || ^8.3 || ^8.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Revo\\MarketingTool\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Revo\\MarketingTool\\MarketingToolServiceProvider"
+            ]
+        }
+    }
+}
