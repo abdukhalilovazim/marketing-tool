@@ -336,6 +336,7 @@
     .main { margin-left: 0; }
     .kpi-grid, .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
     .filter-bar { flex-wrap: wrap; }
+  }
   /* ── Tooltips ── */
   .info-tooltip-container {
     position: absolute;
@@ -502,7 +503,11 @@
     <div class="grid-2" id="funnelArea"></div>
 
     <!-- Charts row -->
-    <div class="card mb-14">
+    <div class="card mb-14" style="position: relative;">
+      <div class="info-tooltip-container">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-tooltip">Tanlangan davr mobaynida kunlik yangi ro'yxatdan o'tgan foydalanuvchilar soni dinamikasi</div>
+      </div>
       <div class="chart-hdr">
         <div>
           <div class="chart-title">Yangi foydalanuvchilar</div>
@@ -516,7 +521,11 @@
       <canvas id="mktNewUserChart" height="75"></canvas>
     </div>
 
-    <div class="card mb-14" id="activeChartWrap">
+    <div class="card mb-14" id="activeChartWrap" style="position: relative;">
+      <div class="info-tooltip-container">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-tooltip">Tanlangan davr mobaynida kunlik faol (ilovadan foydalangan) foydalanuvchilar soni dinamikasi</div>
+      </div>
       <div class="chart-hdr">
         <div>
           <div class="chart-title">Faol foydalanuvchilar</div>
@@ -531,7 +540,11 @@
     </div>
 
     <!-- Source donut -->
-    <div class="card mb-14" id="sourceChartWrap">
+    <div class="card mb-14" id="sourceChartWrap" style="position: relative;">
+      <div class="info-tooltip-container">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-tooltip">Foydalanuvchilar qaysi kanallar (Instagram, Telegram, YouTube va b.) orqali ilovani topganligi taqsimoti</div>
+      </div>
       <div class="chart-hdr">
         <div>
           <div class="chart-title">Foydalanuvchi manbalari</div>
@@ -719,7 +732,11 @@ function renderMonthCmp() {
   }
 
   area.innerHTML = `
-    <div class="chart-hdr">
+    <div class="chart-hdr" style="position: relative;">
+      <div class="info-tooltip-container" style="top: 0; right: 0;">
+        <span class="info-icon">ℹ️</span>
+        <div class="info-tooltip">Oylar kesimida foydalanuvchilar o'sishi va o'tgan oyning shu davriga nisbatan taqqoslama ko'rsatkichlari</div>
+      </div>
       <div><div class="chart-title">Oylik taqqoslama</div><div class="chart-sub">So'nggi oylar dinamikasi</div></div>
     </div>
     <div class="month-cmp">
@@ -752,8 +769,16 @@ function renderFunnels() {
         </div>`;
     }).join('');
 
+    const tooltipText = title === 'Yangi foydalanuvchi funnel' 
+      ? 'Yangi foydalanuvchilarning ro\'yxatdan o\'tishdan boshlab birinchi tranzaksiyagacha bo\'lgan bosqichlari' 
+      : 'Faol foydalanuvchilarning faollikdan boshlab tranzaksiyagacha bo\'lgan konversiya bosqichlari';
+
     return `
-      <div class="card">
+      <div class="card" style="position: relative;">
+        <div class="info-tooltip-container" style="top: 18px; right: 18px;">
+          <span class="info-icon">ℹ️</span>
+          <div class="info-tooltip">${tooltipText}</div>
+        </div>
         <div class="funnel-hdr">
           <div class="funnel-icon" style="background:${color}1a">${icon}</div>
           <div class="funnel-title">${title}</div>
