@@ -20,6 +20,33 @@ class MarketingController extends Controller
     }
 
     /**
+     * Set active locale in session and Laravel Nova cache.
+     *
+     * @param string $lang
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function setLocale(string $lang)
+    {
+        $supported = config('nova-language-switch.supported-languages', [
+            'uz' => 'O\'zbekcha',
+            'ru' => 'Русский',
+        ]);
+
+        if (array_key_exists($lang, $supported)) {
+            session()->put('locale', $lang);
+            
+            $guard = config('nova.guard', config('auth.defaults.guard', 'web'));
+            if (auth()->guard($guard)->check()) {
+                $key = auth()->guard($guard)->id() . '.locale';
+                \Illuminate\Support\Facades\Cache::forever($key, $lang);
+            }
+            app()->setLocale($lang);
+        }
+
+        return redirect()->back();
+    }
+
+    /**
      * Fetch marketing statistics data.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -174,13 +201,13 @@ class MarketingController extends Controller
 
         return [
             'new_user' => [
-                ['label' => 'New User', 'total' => $newUsers, 'uz' => $newUsersUz, 'ru' => $newUsersRu],
-                ['label' => 'Identifikatsiya qilganlar', 'total' => $identified, 'uz' => $identifiedUz, 'ru' => $identifiedRu],
-                ['label' => 'Transaksiya qilganlar', 'total' => $transacting, 'uz' => $transactingUz, 'ru' => $transactingRu],
+                ['label' => trans('marketing-tool::messages.new_users'), 'total' => $newUsers, 'uz' => $newUsersUz, 'ru' => $newUsersRu],
+                ['label' => trans('marketing-tool::messages.identified_users'), 'total' => $identified, 'uz' => $identifiedUz, 'ru' => $identifiedRu],
+                ['label' => trans('marketing-tool::messages.transacting_users'), 'total' => $transacting, 'uz' => $transactingUz, 'ru' => $transactingRu],
             ],
             'active_user' => [
-                ['label' => 'Active user', 'total' => $activeUsers, 'uz' => $activeUsersUz, 'ru' => $activeUsers - $activeUsersUz],
-                ['label' => 'Transaksiya qilgan userla', 'total' => $activeTransacting, 'uz' => $activeTransactingUz, 'ru' => $activeTransacting - $activeTransactingUz],
+                ['label' => trans('marketing-tool::messages.active_user'), 'total' => $activeUsers, 'uz' => $activeUsersUz, 'ru' => $activeUsers - $activeUsersUz],
+                ['label' => trans('marketing-tool::messages.active_transacting_users'), 'total' => $activeTransacting, 'uz' => $activeTransactingUz, 'ru' => $activeTransacting - $activeTransactingUz],
             ]
         ];
     }

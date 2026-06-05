@@ -20,11 +20,18 @@ class MarketingToolServiceProvider extends ServiceProvider
         // Load package views
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'marketing-tool');
 
+        // Load package translations
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'marketing-tool');
+
         // Publish package configuration
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__ . '/../config/marketing-tool.php' => config_path('marketing-tool.php'),
             ], 'marketing-tool-config');
+
+            $this->publishes([
+                __DIR__ . '/../resources/lang' => resource_path('lang/vendor/marketing-tool'),
+            ], 'marketing-tool-lang');
         }
     }
 

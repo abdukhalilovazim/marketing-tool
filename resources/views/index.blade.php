@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="{{ app()->getLocale() }}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,18 +7,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  (function() {
+    const theme = localStorage.getItem('theme') || 'dark';
+    if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  })();
+</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: rgba(255,255,255,0.07);
-    --border-hover: rgba(255,255,255,0.14);
-    --text: #f1f5f9;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface2: #f1f5f9;
+    --border: rgba(0,0,0,0.08);
+    --border-hover: rgba(0,0,0,0.14);
+    --text: #0f172a;
     --text-muted: #64748b;
-    --text-dim: #94a3b8;
+    --text-dim: #334155;
     --accent: #6366f1;
     --accent2: #8b5cf6;
     --green: #10b981;
@@ -29,12 +39,195 @@
     --sidebar-w: 220px;
   }
 
+  html.dark {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.14);
+    --text: #f1f5f9;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+  }
+
   body {
     font-family: 'Inter', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     display: flex;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  /* ── Header details and selectors ── */
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .btn-nova-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .btn-nova-back:hover {
+    background: var(--border-hover);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+  .back-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-theme-toggle:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+  .btn-theme-toggle svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .lang-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .btn-lang {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    transition: all 0.15s;
+  }
+  .btn-lang:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .chevron-icon {
+    width: 12px;
+    height: 12px;
+    transition: transform 0.15s;
+  }
+  .lang-dropdown.open .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  .lang-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    display: none;
+    flex-direction: column;
+    min-width: 120px;
+    z-index: 50;
+    overflow: hidden;
+  }
+  .lang-dropdown.open .lang-menu {
+    display: flex;
+  }
+
+  .lang-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-decoration: none;
+    text-align: left;
+    transition: all 0.15s;
+  }
+  .lang-item:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .lang-item.active {
+    background: rgba(99,102,241,0.08);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 1px solid var(--border);
+    padding-left: 14px;
+  }
+
+  .avatar-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.2);
+  }
+
+  .user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .default-avatar {
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    user-select: none;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .user-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .user-role {
+    font-size: 10px;
+    color: var(--text-muted);
   }
 
   /* ── Sidebar ── */
@@ -459,12 +652,12 @@
   </div>
 
   <nav class="sidebar-nav">
-    <div class="nav-label">Asosiy</div>
+    <div class="nav-label">{{ __('marketing-tool::messages.main_stats') }}</div>
     <a class="nav-item active" id="menuDashboard" href="#" onclick="switchTab('dashboard')">
-      <span class="nav-icon">📊</span> Dashboard
+      <span class="nav-icon">📊</span> {{ __('marketing-tool::messages.dashboard') }}
     </a>
     <a class="nav-item" id="menuRetention" href="#" onclick="switchTab('retention')">
-      <span class="nav-icon">📈</span> Retention
+      <span class="nav-icon">📈</span> {{ __('marketing-tool::messages.retention') }}
     </a>
   </nav>
 
@@ -479,8 +672,52 @@
   <!-- Topbar -->
   <header class="topbar">
     <div class="topbar-left">
-      <div class="page-title">Marketing Dashboard</div>
-      <span class="page-badge">LIVE</span>
+      <div class="page-title">{{ __('marketing-tool::messages.marketing_dashboard') }}</div>
+      <span class="page-badge">{{ __('marketing-tool::messages.active') }}</span>
+    </div>
+    <div class="topbar-right">
+      <!-- Back to Nova Button -->
+      <a href="{{ url(config('nova.path', '/nova')) }}" class="btn-nova-back">
+        <svg class="back-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <span>{{ __('marketing-tool::messages.back_to_nova') }}</span>
+      </a>
+
+      <!-- Theme Toggle -->
+      <button onclick="toggleTheme()" class="btn-theme-toggle" id="themeToggleBtn" title="Theme Toggle">
+        <!-- Sun icon -->
+        <svg class="theme-icon-light" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"></path></svg>
+        <!-- Moon icon -->
+        <svg class="theme-icon-dark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display: none;"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+      </button>
+
+      <!-- Language Dropdown -->
+      <div class="lang-dropdown" id="langDropdown">
+        <button class="btn-lang" onclick="toggleLangMenu(event)">
+          <span>{{ app()->getLocale() === 'ru' ? '🇷🇺 RU' : '🇺🇿 UZ' }}</span>
+          <svg class="chevron-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        <div class="lang-menu" id="langMenu">
+          <a href="{{ route('marketing-tool.set-locale', ['lang' => 'uz']) }}" class="lang-item {{ app()->getLocale() === 'uz' ? 'active' : '' }}">🇺🇿 O'zbekcha</a>
+          <a href="{{ route('marketing-tool.set-locale', ['lang' => 'ru']) }}" class="lang-item {{ app()->getLocale() === 'ru' ? 'active' : '' }}">🇷🇺 Русский</a>
+        </div>
+      </div>
+
+      <!-- User Profile -->
+      <div class="user-profile">
+        <div class="avatar-wrap">
+          @if(auth()->user()?->avatar)
+            <img src="{{ auth()->user()->avatar }}" alt="Avatar" class="user-avatar">
+          @else
+            <div class="default-avatar">
+              {{ strtoupper(substr(auth()->user()?->name ?? auth()->user()?->phone ?? auth()->user()?->email ?? 'A', 0, 1)) }}
+            </div>
+          @endif
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ auth()->user()?->name ?? auth()->user()?->phone ?? __('marketing-tool::messages.guest') }}</span>
+          <span class="user-role">{{ auth()->user()?->phone ?? auth()->user()?->email ?? __('marketing-tool::messages.admin_role') }}</span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -493,12 +730,12 @@
     <!-- Date Filter Bar (Moved under Month Comparison) -->
     <div class="card mb-14" style="padding: 14px 20px;">
       <div class="filter-bar" style="background: transparent; border: none; padding: 0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span class="filter-lbl" style="font-size: 12px;">Dan</span>
+        <span class="filter-lbl" style="font-size: 12px;">{{ __('marketing-tool::messages.from') }}</span>
         <input class="date-inp" type="date" id="mktFrom" style="font-size: 13px; background: var(--surface2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
         <span class="filter-arrow">→</span>
-        <span class="filter-lbl" style="font-size: 12px;">Gacha</span>
+        <span class="filter-lbl" style="font-size: 12px;">{{ __('marketing-tool::messages.to') }}</span>
         <input class="date-inp" type="date" id="mktTo" style="font-size: 13px; background: var(--surface2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);">
-        <button class="btn-apply" onclick="refreshData()" style="margin-left: auto; height: 34px;">Qo'llash</button>
+        <button class="btn-apply" onclick="refreshData()" style="margin-left: auto; height: 34px;">{{ __('marketing-tool::messages.apply') }}</button>
       </div>
     </div>
 
@@ -507,42 +744,42 @@
       <div class="kpi-card indigo">
         <div class="info-tooltip-container">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Tizimda ro'yxatdan o'tgan jami foydalanuvchilar soni</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.total_users_tooltip') }}</div>
         </div>
         <div class="kpi-icon">👤</div>
-        <div class="kpi-label">Jami foydalanuvchi</div>
+        <div class="kpi-label">{{ __('marketing-tool::messages.total_users') }}</div>
         <div class="kpi-value" id="kpiTotalUsers">—</div>
-        <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
+        <div class="kpi-sub"><span class="kpi-desc">{{ __('marketing-tool::messages.loading') }}</span></div>
       </div>
       <div class="kpi-card green">
         <div class="info-tooltip-container">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Tanlangan davr mobaynida ilovadan foydalangan faol foydalanuvchilar soni</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.active_users_tooltip') }}</div>
         </div>
         <div class="kpi-icon">✅</div>
-        <div class="kpi-label">Aktiv foydalanuvchi</div>
+        <div class="kpi-label">{{ __('marketing-tool::messages.active_users') }}</div>
         <div class="kpi-value" id="kpiActiveUsers">—</div>
-        <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
+        <div class="kpi-sub"><span class="kpi-desc">{{ __('marketing-tool::messages.loading') }}</span></div>
       </div>
       <div class="kpi-card blue">
         <div class="info-tooltip-container">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Tanlangan davrda ro'yxatdan o'tgan yangi foydalanuvchilar soni</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.new_users_tooltip') }}</div>
         </div>
         <div class="kpi-icon">🆕</div>
-        <div class="kpi-label">Yangi foydalanuvchi</div>
+        <div class="kpi-label">{{ __('marketing-tool::messages.new_users') }}</div>
         <div class="kpi-value" id="kpiNewUsers">—</div>
-        <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
+        <div class="kpi-sub"><span class="kpi-desc">{{ __('marketing-tool::messages.loading') }}</span></div>
       </div>
       <div class="kpi-card orange">
         <div class="info-tooltip-container">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Tanlangan davrda amalga oshirilgan muvaffaqiyatli pul o'tkazmalari soni</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.transfers_tooltip') }}</div>
         </div>
         <div class="kpi-icon">💸</div>
-        <div class="kpi-label">Transferlar</div>
+        <div class="kpi-label">{{ __('marketing-tool::messages.transfers') }}</div>
         <div class="kpi-value" id="kpiTransfers">—</div>
-        <div class="kpi-sub"><span class="kpi-desc">Yuklanmoqda...</span></div>
+        <div class="kpi-sub"><span class="kpi-desc">{{ __('marketing-tool::messages.loading') }}</span></div>
       </div>
     </div>
 
@@ -553,12 +790,12 @@
     <div class="card mb-14" style="position: relative;">
       <div class="info-tooltip-container">
         <span class="info-icon">ℹ️</span>
-        <div class="info-tooltip">Tanlangan davr mobaynida kunlik yangi ro'yxatdan o'tgan foydalanuvchilar soni dinamikasi</div>
+        <div class="info-tooltip">{{ __('marketing-tool::messages.new_users_chart_tooltip') }}</div>
       </div>
       <div class="chart-hdr">
         <div>
-          <div class="chart-title">Yangi foydalanuvchilar</div>
-          <div class="chart-sub">Kunlik dinamika (UZ + RU)</div>
+          <div class="chart-title">{{ __('marketing-tool::messages.new_users_chart_title') }}</div>
+          <div class="chart-sub">{{ __('marketing-tool::messages.daily_dynamics_uz_ru') }}</div>
         </div>
         <select class="chart-type-sel" id="mktNewUserSel" onchange="updateCharts()">
           <option value="line">Line</option>
@@ -571,12 +808,12 @@
     <div class="card mb-14" id="activeChartWrap" style="position: relative;">
       <div class="info-tooltip-container">
         <span class="info-icon">ℹ️</span>
-        <div class="info-tooltip">Tanlangan davr mobaynida kunlik faol (ilovadan foydalangan) foydalanuvchilar soni dinamikasi</div>
+        <div class="info-tooltip">{{ __('marketing-tool::messages.active_users_chart_tooltip') }}</div>
       </div>
       <div class="chart-hdr">
         <div>
-          <div class="chart-title">Faol foydalanuvchilar</div>
-          <div class="chart-sub">Kunlik faollik dinamikasi</div>
+          <div class="chart-title">{{ __('marketing-tool::messages.active_users_chart_title') }}</div>
+          <div class="chart-sub">{{ __('marketing-tool::messages.daily_activity_dynamics') }}</div>
         </div>
         <select class="chart-type-sel" id="mktActiveSel" onchange="updateCharts()">
           <option value="line">Line</option>
@@ -590,12 +827,12 @@
       <div class="card mb-14" id="sourceChartWrap" style="position: relative;">
         <div class="info-tooltip-container">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Foydalanuvchilar qaysi kanallar (Instagram, Telegram, YouTube va b.) orqali ilovani topganligi taqsimoti</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.user_sources_tooltip') }}</div>
         </div>
         <div class="chart-hdr">
           <div>
-            <div class="chart-title">Foydalanuvchi manbalari</div>
-            <div class="chart-sub">Ilova topish kanallari bo'yicha taqsimot</div>
+            <div class="chart-title">{{ __('marketing-tool::messages.user_sources') }}</div>
+            <div class="chart-sub">{{ __('marketing-tool::messages.discovery_channels_distribution') }}</div>
           </div>
         </div>
         <div class="donut-wrap">
@@ -610,22 +847,22 @@
       <div class="card" style="position: relative; padding: 24px 28px 20px;">
         <div class="info-tooltip-container" style="top: 24px; right: 28px;">
           <span class="info-icon">ℹ️</span>
-          <div class="info-tooltip">Oylar bo'yicha foydalanuvchilarning qaytish (retention) darajasini ko'rsatuvchi cohort tahlil jadvali</div>
+          <div class="info-tooltip">{{ __('marketing-tool::messages.cohort_tooltip') }}</div>
         </div>
         <div class="ret-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <div>
-            <div class="chart-title" style="font-size: 15px; font-weight: 700;">Oylik Cohort Retention Jadvali</div>
+            <div class="chart-title" style="font-size: 15px; font-weight: 700;">{{ __('marketing-tool::messages.monthly_cohort_retention_table') }}</div>
             <div class="chart-sub" id="retSubLabel" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
-              Birinchi marta tranzaksiya qilgan foydalanuvchilar
+              {{ __('marketing-tool::messages.first_time_transaction_users') }}
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <div class="type-btns" style="display: flex; gap: 6px;">
               <button id="btnNew" class="btn-apply" onclick="setRetType('new')" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); box-shadow: none;">
-                Yangi foydalanuvchilar
+                {{ __('marketing-tool::messages.new_users') }}
               </button>
               <button id="btnActive" class="btn-apply" onclick="setRetType('active')" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim); box-shadow: none;">
-                Faol foydalanuvchilar
+                {{ __('marketing-tool::messages.active_users') }}
               </button>
             </div>
             <div class="filter-area" id="retFilterArea" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;"></div>
@@ -637,22 +874,22 @@
           <table class="ret-table" style="width: 100%; border-collapse: collapse; font-size: 12px; min-width: 980px;">
             <thead>
               <tr style="border-bottom: 2px solid var(--border);">
-                <th style="text-align: left; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">COHORT</th>
-                <th style="text-align: right; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">FOYDALANUVCHILAR</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">7-KUN</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">15-KUN</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">1-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">2-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">3-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">4-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">5-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">6-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">7-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">8-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">9-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">10-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">11-OY</th>
-                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">12-OY</th>
+                <th style="text-align: left; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">{{ __('marketing-tool::messages.cohort') }}</th>
+                <th style="text-align: right; padding: 10px 12px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px; text-transform: uppercase;">{{ __('marketing-tool::messages.users_header') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.day_7') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.day_15') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_1') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_2') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_3') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_4') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_5') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_6') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_7') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_8') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_9') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_10') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_11') }}</th>
+                <th style="padding: 10px 6px; font-size: 10.5px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.6px;">{{ __('marketing-tool::messages.month_12') }}</th>
               </tr>
             </thead>
             <tbody id="retTableBody" style="color: var(--text-dim);"></tbody>
@@ -661,7 +898,7 @@
 
         <!-- Legend -->
         <div class="legend-bar" style="display: flex; align-items: center; gap: 16px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); flex-wrap: wrap;">
-          <span class="legend-label" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">Retention darajasi:</span>
+          <span class="legend-label" style="font-size: 11px; color: var(--text-muted); font-weight: 600;">{{ __('marketing-tool::messages.retention_rate_label') }}</span>
           <div class="legend-item" style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;">
             <div class="legend-swatch" style="width: 28px; height: 16px; border-radius: 5px; background: #86efac;"></div>
             <span style="color: #14532d;">≥ 60%</span>
@@ -694,6 +931,77 @@
 </div><!-- /main -->
 
 <script>
+const LANG = {
+  vs_prev_month: "{{ __('marketing-tool::messages.vs_prev_month') }}",
+  activity_rate: "{{ __('marketing-tool::messages.activity_rate') }}",
+  current: "{{ __('marketing-tool::messages.current') }}",
+  current_period_registered: "{{ __('marketing-tool::messages.current_period_registered') }}",
+  successful: "{{ __('marketing-tool::messages.successful') }}",
+  transfers_count: "{{ __('marketing-tool::messages.transfers_count') }}",
+  vs_prev_month_same_period: "{{ __('marketing-tool::messages.vs_prev_month_same_period') }}",
+  no_data: "{{ __('marketing-tool::messages.no_data') }}",
+  monthly_comparison: "{{ __('marketing-tool::messages.monthly_comparison') }}",
+  recent_months_dynamics: "{{ __('marketing-tool::messages.recent_months_dynamics') }}",
+  ta: "{{ __('marketing-tool::messages.ta') }}",
+  new_user_funnel: "{{ __('marketing-tool::messages.new_user_funnel') }}",
+  active_user_funnel: "{{ __('marketing-tool::messages.active_user_funnel') }}",
+  identified_users: "{{ __('marketing-tool::messages.identified_users') }}",
+  transacting_users: "{{ __('marketing-tool::messages.transacting_users') }}",
+  active_user: "{{ __('marketing-tool::messages.active_user') }}",
+  active_transacting_users: "{{ __('marketing-tool::messages.active_transacting_users') }}",
+  new_user_funnel_tooltip: "{{ __('marketing-tool::messages.new_user_funnel_tooltip') }}",
+  active_user_funnel_tooltip: "{{ __('marketing-tool::messages.active_user_funnel_tooltip') }}",
+  total: "{{ __('marketing-tool::messages.total') }}",
+  all: "{{ __('marketing-tool::messages.all') }}",
+  by_year: "{{ __('marketing-tool::messages.by_year') }}",
+  by_month: "{{ __('marketing-tool::messages.by_month') }}",
+  cancel: "{{ __('marketing-tool::messages.cancel') }}",
+  range: "{{ __('marketing-tool::messages.range') }}",
+  first_time_transaction_users: "{{ __('marketing-tool::messages.first_time_transaction_users') }}",
+  at_least_one_transaction_users: "{{ __('marketing-tool::messages.at_least_one_transaction_users') }}",
+  chart_total: "{{ app()->getLocale() === 'ru' ? 'Всего' : 'Jami' }}",
+  chart_active_total: "{{ app()->getLocale() === 'ru' ? 'Активные (всего)' : 'Faol (jami)' }}",
+  chart_active_uz: "{{ app()->getLocale() === 'ru' ? 'Активные UZ' : 'Faol UZ' }}",
+  chart_active_ru: "{{ app()->getLocale() === 'ru' ? 'Активные RU' : 'Faol RU' }}"
+};
+
+function toggleLangMenu(event) {
+  event.stopPropagation();
+  document.getElementById('langDropdown').classList.toggle('open');
+}
+
+document.addEventListener('click', function() {
+  const langDropdown = document.getElementById('langDropdown');
+  if (langDropdown) {
+    langDropdown.classList.remove('open');
+  }
+});
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.classList.contains('dark');
+  const sunIcon = document.querySelector('.theme-icon-light');
+  const moonIcon = document.querySelector('.theme-icon-dark');
+  if (sunIcon && moonIcon) {
+    if (isDark) {
+      sunIcon.style.display = 'block';
+      moonIcon.style.display = 'none';
+    } else {
+      sunIcon.style.display = 'none';
+      moonIcon.style.display = 'block';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateThemeIcon();
+});
+
 let currentData = null;
 let newUserChart = null;
 let activeUserChart = null;
@@ -815,21 +1123,21 @@ function updateKPIs() {
     const sign = getSign(curMonth.diff);
     const arrow = curMonth.diff > 0 ? '▲' : (curMonth.diff < 0 ? '▼' : '');
     document.querySelectorAll('#kpiArea .kpi-sub')[0].innerHTML =
-      `<span class="kpi-badge ${sign}">${arrow} ${Math.abs(curMonth.pct)}%</span><span class="kpi-desc">o'tgan oyga nisbatan</span>`;
+      `<span class="kpi-badge ${sign}">${arrow} ${Math.abs(curMonth.pct)}%</span><span class="kpi-desc">${LANG.vs_prev_month}</span>`;
   }
 
   // Active Users Subtext
   const activeRate = newTotal > 0 ? ((activeTotal / newTotal) * 100).toFixed(1) : 0;
   document.querySelectorAll('#kpiArea .kpi-sub')[1].innerHTML =
-    `<span class="kpi-badge up">${activeRate}%</span><span class="kpi-desc">faollik darajasi</span>`;
+    `<span class="kpi-badge up">${activeRate}%</span><span class="kpi-desc">${LANG.activity_rate}</span>`;
 
   // New Users Subtext
   document.querySelectorAll('#kpiArea .kpi-sub')[2].innerHTML =
-    `<span class="kpi-badge neutral">Joriy</span><span class="kpi-desc">davrdagi yangi ro'yxatdan o'tganlar</span>`;
+    `<span class="kpi-badge neutral">${LANG.current}</span><span class="kpi-desc">${LANG.current_period_registered}</span>`;
 
   // Transfers Subtext
   document.querySelectorAll('#kpiArea .kpi-sub')[3].innerHTML =
-    `<span class="kpi-badge up">Muvaffaqiyatli</span><span class="kpi-desc">tranzaksiyalar soni</span>`;
+    `<span class="kpi-badge up">${LANG.successful}</span><span class="kpi-desc">${LANG.transfers_count}</span>`;
 }
 
 function renderMonthCmp() {
@@ -863,7 +1171,7 @@ function renderMonthCmp() {
 
   let curHtml = '';
   if (!current.total) {
-    curHtml = `<div class="month-current"><div style="font-size:32px;opacity:.2">—</div><div class="cur-month-desc">Ma'lumot yo'q</div></div>`;
+    curHtml = `<div class="month-current"><div style="font-size:32px;opacity:.2">—</div><div class="cur-month-desc">${LANG.no_data}</div></div>`;
   } else {
     const sign = getSign(current.diff);
     const arrow = current.diff > 0 ? '▲' : (current.diff < 0 ? '▼' : '');
@@ -875,8 +1183,8 @@ function renderMonthCmp() {
           <div class="cur-month-num">${fmtK(current.total)}</div>
           <div class="cur-month-pct ${sign}">${arrow}${Math.abs(current.pct)}%</div>
         </div>
-        <div class="cur-month-diff ${sign}">${fmtDiff(current.diff)} ta</div>
-        <div class="cur-month-desc">o'tgan oy shu davriga nisbatan</div>
+        <div class="cur-month-diff ${sign}">${fmtDiff(current.diff)} ${LANG.ta}</div>
+        <div class="cur-month-desc">${LANG.vs_prev_month_same_period}</div>
       </div>`;
   }
 
@@ -884,9 +1192,9 @@ function renderMonthCmp() {
     <div class="chart-hdr" style="position: relative;">
       <div class="info-tooltip-container" style="top: 0; right: 0;">
         <span class="info-icon">ℹ️</span>
-        <div class="info-tooltip">Oylar kesimida foydalanuvchilar o'sishi va o'tgan oyning shu davriga nisbatan taqqoslama ko'rsatkichlari</div>
+        <div class="info-tooltip">${LANG.monthly_comparison_tooltip || "Oylar kesimida foydalanuvchilar o'sishi va o'tgan oyning shu davriga nisbatan taqqoslama ko'rsatkichlari"}</div>
       </div>
-      <div><div class="chart-title">Oylik taqqoslama</div><div class="chart-sub">So'nggi oylar dinamikasi</div></div>
+      <div><div class="chart-title">${LANG.monthly_comparison}</div><div class="chart-sub">${LANG.recent_months_dynamics}</div></div>
     </div>
     <div class="month-cmp">
       <div class="month-bars">${barsHtml}</div>
