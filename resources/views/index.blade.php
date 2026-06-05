@@ -1226,9 +1226,9 @@ function renderFunnels() {
         </div>`;
     }).join('');
 
-    const tooltipText = title === 'Yangi foydalanuvchi funnel' 
-      ? 'Yangi foydalanuvchilarning ro\'yxatdan o\'tishdan boshlab birinchi tranzaksiyagacha bo\'lgan bosqichlari' 
-      : 'Faol foydalanuvchilarning faollikdan boshlab tranzaksiyagacha bo\'lgan konversiya bosqichlari';
+    const tooltipText = title === LANG.new_user_funnel 
+      ? LANG.new_user_funnel_tooltip
+      : LANG.active_user_funnel_tooltip;
 
     return `
       <div class="card" style="position: relative;">
@@ -1245,9 +1245,9 @@ function renderFunnels() {
   }
 
   area.innerHTML =
-    funnel(new_user, PALETTE.indigo, '👤', 'Yangi foydalanuvchi funnel') +
+    funnel(new_user, PALETTE.indigo, '👤', LANG.new_user_funnel) +
     ((active_user && active_user[0]?.total > 0)
-      ? funnel(active_user, PALETTE.green, '⚡', 'Faol foydalanuvchi funnel')
+      ? funnel(active_user, PALETTE.green, '⚡', LANG.active_user_funnel)
       : '');
 }
 
@@ -1266,7 +1266,7 @@ function updateCharts() {
     data: {
       labels: stats.labels,
       datasets: [
-        { label: 'Jami', data: stats.new_user.total, borderColor: PALETTE.indigo, backgroundColor: nuType === 'bar' ? PALETTE.indigo + 'cc' : PALETTE.indigo + '12', fill: nuType !== 'bar', tension: 0.45, borderRadius: 5, borderWidth: 2 },
+        { label: LANG.chart_total, data: stats.new_user.total, borderColor: PALETTE.indigo, backgroundColor: nuType === 'bar' ? PALETTE.indigo + 'cc' : PALETTE.indigo + '12', fill: nuType !== 'bar', tension: 0.45, borderRadius: 5, borderWidth: 2 },
         { label: '🇺🇿 UZ',  data: stats.new_user.uz,    borderColor: PALETTE.blue,   backgroundColor: nuType === 'bar' ? PALETTE.blue   + 'cc' : PALETTE.blue   + '0d', fill: false, tension: 0.45, borderRadius: 5, borderWidth: 2 },
         { label: '🇷🇺 RU',  data: stats.new_user.ru,    borderColor: PALETTE.green,  backgroundColor: nuType === 'bar' ? PALETTE.green  + 'cc' : PALETTE.green  + '0d', fill: false, tension: 0.45, borderRadius: 5, borderWidth: 2 },
       ]
@@ -1284,9 +1284,9 @@ function updateCharts() {
       data: {
         labels: stats.labels,
         datasets: [
-          { label: 'Faol (jami)', data: stats.active_user.total, borderColor: PALETTE.purple, backgroundColor: nuType === 'bar' ? PALETTE.purple + 'cc' : PALETTE.purple + '10', fill: auType !== 'bar', tension: 0.42, borderRadius: 4, borderWidth: 2 },
-          { label: '🇺🇿 Faol UZ', data: stats.active_user.uz,    borderColor: PALETTE.blue,   backgroundColor: 'transparent', fill: false, tension: 0.42, borderRadius: 4, borderWidth: 2 },
-          { label: '🇷🇺 Faol RU', data: stats.active_user.ru,    borderColor: PALETTE.orange, backgroundColor: 'transparent', fill: false, tension: 0.42, borderRadius: 4, borderWidth: 2 },
+          { label: LANG.chart_active_total, data: stats.active_user.total, borderColor: PALETTE.purple, backgroundColor: nuType === 'bar' ? PALETTE.purple + 'cc' : PALETTE.purple + '10', fill: auType !== 'bar', tension: 0.42, borderRadius: 4, borderWidth: 2 },
+          { label: '🇺🇿 ' + LANG.chart_active_uz, data: stats.active_user.uz,    borderColor: PALETTE.blue,   backgroundColor: 'transparent', fill: false, tension: 0.42, borderRadius: 4, borderWidth: 2 },
+          { label: '🇷🇺 ' + LANG.chart_active_ru, data: stats.active_user.ru,    borderColor: PALETTE.orange, backgroundColor: 'transparent', fill: false, tension: 0.42, borderRadius: 4, borderWidth: 2 },
         ]
       },
       options: chartOptions(gridColor, tickColor),
@@ -1330,7 +1330,7 @@ function renderSourceDonut() {
       ctx.fillStyle = '#f1f5f9'; ctx.font = '700 22px Inter,sans-serif';
       ctx.fillText(fmtK(total), cx, cy - 6);
       ctx.fillStyle = '#64748b'; ctx.font = '500 11px Inter,sans-serif';
-      ctx.fillText('jami', cx, cy + 12);
+      ctx.fillText(LANG.total, cx, cy + 12);
       ctx.restore();
     }
   };
@@ -1421,7 +1421,7 @@ function switchTab(tab) {
     tabRetention.style.display = 'none';
     menuDashboard.classList.add('active');
     menuRetention.classList.remove('active');
-    if (pageTitle) pageTitle.textContent = 'Marketing Dashboard';
+    if (pageTitle) pageTitle.textContent = LANG.marketing_dashboard;
     if (pageBadge) {
       pageBadge.textContent = 'LIVE';
       pageBadge.style.background = 'rgba(99,102,241,0.15)';
@@ -1432,7 +1432,7 @@ function switchTab(tab) {
     tabRetention.style.display = 'block';
     menuDashboard.classList.remove('active');
     menuRetention.classList.add('active');
-    if (pageTitle) pageTitle.textContent = 'Retention Analytics';
+    if (pageTitle) pageTitle.textContent = LANG.retention;
     if (pageBadge) {
       pageBadge.textContent = 'Cohort Analysis';
       pageBadge.style.background = 'rgba(59,130,246,0.15)';
@@ -1485,8 +1485,8 @@ function renderRet() {
   // Sub label
   document.getElementById("retSubLabel").textContent =
     retType === "new"
-      ? "Birinchi marta tranzaksiya qilgan foydalanuvchilar"
-      : "O'sha oyda kamida 1 tranzaksiya qilgan foydalanuvchilar";
+      ? LANG.first_time_transaction_users
+      : LANG.at_least_one_transaction_users;
 
   // Type buttons styling
   const btnNew = document.getElementById("btnNew");
@@ -1514,12 +1514,12 @@ function renderRet() {
   const bRangeStyle = `padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;border:1px solid;${retRange ? "background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3);" : "background:var(--surface2);color:var(--text-dim);border-color:var(--border);"}`;
 
   const mainOpts = `
-    <option value="all"${retSel === "all" ? " selected" : ""}>Barcha</option>
-    <optgroup label="Yil bo'yicha">
+    <option value="all"${retSel === "all" ? " selected" : ""}>${LANG.all}</option>
+    <optgroup label="${LANG.by_year}">
       <option value="y:2025"${retSel === "y:2025" ? " selected" : ""}>2025</option>
       <option value="y:2026"${retSel === "y:2026" ? " selected" : ""}>2026</option>
     </optgroup>
-    <optgroup label="Oy bo'yicha">
+    <optgroup label="${LANG.by_month}">
       ${allLabels.map(m => `<option value="m:${m}"${retSel === `m:${m}` ? " selected" : ""}>${m}</option>`).join("")}
     </optgroup>`;
 
@@ -1531,13 +1531,13 @@ function renderRet() {
         <span style="color:var(--text-muted);font-size:13px">—</span>
         <input type="date" value="${retTo}" min="2025-01-01" max="2026-04-30"
                style="${inStyle}" onchange="retTo=this.value;renderRet()">
-        <button style="${bRangeStyle}" onclick="retRange=false;retFrom='';retTo='';renderRet()">× Bekor</button>
+        <button style="${bRangeStyle}" onclick="retRange=false;retFrom='';retTo='';renderRet()">× ${LANG.cancel}</button>
       </div>`;
   } else {
     filterArea.innerHTML = `
       <div style="display:flex;align-items:center;gap:6px">
         <select style="${selStyle}" onchange="retSel=this.value;renderRet()">${mainOpts}</select>
-        <button style="${bRangeStyle}" onclick="retRange=true;retSel='all';renderRet()">Oraliq</button>
+        <button style="${bRangeStyle}" onclick="retRange=true;retSel='all';renderRet()">${LANG.range}</button>
       </div>`;
   }
 
