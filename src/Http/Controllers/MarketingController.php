@@ -467,7 +467,7 @@ class MarketingController extends Controller
                 ->where('debit_state', 1)
                 ->selectRaw('user_id, MIN(created_at) as first_transfer_at')
                 ->groupBy('user_id')
-                ->having('first_transfer_at', '>=', now()->subMonths(18))
+                ->havingRaw('MIN(created_at) >= ?', [now()->subMonths(18)])
                 ->get();
 
             // Group users by first transfer month
